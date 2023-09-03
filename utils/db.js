@@ -1,4 +1,5 @@
 const { MongoClient } = require('mongodb');
+const sha1 = require('sha1');
 
 class DBClient {
   constructor() {
@@ -39,6 +40,35 @@ class DBClient {
       .countDocuments();
 
     return files;
+  }
+
+  async createUser(email, password) {
+    await this.client.connect();
+
+    const hashedPwd = sha1(password);
+
+    const data = await this.client
+      .db(this.database)
+      .collection('users')
+      .insertOne({
+        email,
+        password: hashedPwd,
+      });
+
+    return data.insertedId.toString();
+  }
+
+  async findUser(email) {
+    await this.client.connect();
+
+    const user = await this.client
+      .db(this.database)
+      .collection('users')
+      .findOne({
+        email,
+      });
+
+    return user;
   }
 }
 
