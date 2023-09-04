@@ -43,7 +43,7 @@ class RedisClient {
     const delData = promisify(this.client.del).bind(this.client);
 
     try {
-      await delData.del(key);
+      await delData(key);
     } catch (err) {
       console.error(err);
     }

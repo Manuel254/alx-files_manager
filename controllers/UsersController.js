@@ -1,4 +1,6 @@
+const sha1 = require('sha1');
 const db = require('../utils/db');
+const redis = require('../utils/redis');
 
 const controller = {
   postNew: async (req, res) => {
@@ -16,7 +18,7 @@ const controller = {
         return;
       }
 
-      const user = await db.findUser(email);
+      const user = await db.findUser(email, sha1(password));
 
       if (user) {
         res.status(400).json({ error: 'Already exist' });
@@ -31,6 +33,21 @@ const controller = {
     } catch (err) {
       console.error(err);
       throw err;
+    }
+  },
+  getMe: async (req, res) => {
+    const token = req.headers['x-token'];
+
+    const key = `auth_${token}`;
+    const id = await redis.get(key);
+    const user = await db.findUserById(id);
+
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      res.end();
+    } else {
+      res.status(200).json({ id, email: user.email });
+      res.end();
     }
   },
 };
